@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/all.min.css">
+</head>
+<body>
+    <nav class="navbar bg-dark navbar-dark">
+        <div class="container" style="max-width: 600px;">
+            <a href="#" class="navbar-brand">Category</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 600px;">
+        <form class="input-group my-4">
+            <input type="text" class="form-control">
+            <button class="btn btn-dark">Add</button>
+        </form>
+        
+        <ul class="list-group"></ul>
+    </div>
+
+    <script>
+        const api = "http://localhost:8000/api/categories";
+        const token = "1|P8poZCqHSuCioc4qCwXPIVJjpju85vgYqqiuW5JE92742ebf";
+
+        fetch(api, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        .then(res => res.json())
+        .then(data => data.map(item => createItem(item)));
+
+        document.querySelector("form").onsubmit = e => {
+            e.preventDefault();
+
+            const name = document.querySelector("input").value;
+            if(!name) return false;
+
+            fetch(api, {
+                method: "POST",
+                body: JSON.stringify({ name }),
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            }).then(res => res.json()).then(item => {
+                createItem(item);
+            });
+
+            e.currentTarget.reset();
+        }
+
+        function createItem(item) {
+            const li = document.createElement("li");
+            li.classList.add("list-group-item");
+            li.innerHTML = `<b>${item.name}</b>`;
+
+            const del = document.createElement("a");
+            del.classList.add("fa-solid", "fa-trash", "text-danger", "float-end");
+            del.onclick = () => {
+                fetch(`${api}/${item.id}`, { 
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
+                li.remove();
+            }
+            li.append(del);
+
+            const edit = document.createElement("a");
+            edit.classList.add("fa-solid", "fa-edit", "float-end", "me-2");
+            edit.onclick = () => {
+                const current = li.querySelector("b").textContent;
+                const update = prompt("Category Name", current);
+                if(update) {
+                    fetch(`${api}/${item.id}`, {
+                        method: "PUT",
+                        body: JSON.stringify({ name: update }),
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`,
+                        }
+                    });
+
+                    li.querySelector("b").textContent = update;
+                }
+            }
+            li.appendChild(edit);
+
+            document.querySelector("ul").appendChild(li);
+        }
+    </script>
+</body>
+</html>
